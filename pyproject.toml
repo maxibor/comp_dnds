@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "comp-dnds"
+version = "0.1.0"
+description = ""
+authors = ["maxibor <maxime_borry@eva.mpg.de>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.13"
+biopython = "^1.81"
+numpy = "^1.26.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
