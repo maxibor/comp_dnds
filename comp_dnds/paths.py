@@ -8,6 +8,8 @@ alphabet = ["A", "T", "G", "C"]
 
 def hamming_distance(codon1, codon2):
     """Compute the Hamming distance between two sequences"""
+    if len(codon1) != len(codon2):
+        raise ValueError("Codons must have the same length")
     return sum(a != b for a, b in zip(codon1, codon2))
 
 
