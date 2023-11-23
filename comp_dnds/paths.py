@@ -1,5 +1,4 @@
 from itertools import product, permutations
-from functools import lru_cache
 from typing import List, Dict, Tuple
 
 # Define the alphabet and a helper function to compute Hamming distance

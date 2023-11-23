@@ -1,5 +1,5 @@
 from Bio.Data import CodonTable
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 from numpy import log
 from comp_dnds.paths import get_all_codons_paths, hamming_distance
 from comp_dnds.expected import get_expected

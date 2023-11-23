@@ -1,1 +1,1 @@
-from . import dnds
+from .dnds import dnds

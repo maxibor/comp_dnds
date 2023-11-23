@@ -1,8 +1,5 @@
 from Bio.Data import CodonTable
 from typing import List, Dict, Tuple
-import itertools
-import timeit
-import math
 
 
 def get_expected(
