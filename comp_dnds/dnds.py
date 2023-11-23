@@ -49,6 +49,11 @@ class dnds:
             return True
         return False
 
+    def __is_in_frame(self, seq):
+        if len(seq) % self.codon_size == 0:
+            return True
+        return False
+
     def __get_codons(self, seq: str) -> List[str]:
         """Private method to get codons from a sequence.
 
@@ -58,11 +63,52 @@ class dnds:
         Returns:
             List[str]: list of codons
         """
-        return [
+        codons = [
             seq[i : i + self.codon_size] for i in range(0, len(seq), self.codon_size)
         ]
+        for codon in codons:
+            for base in codon:
+                if base not in self.alphabet:
+                    raise ValueError(f"Invalid base {base} in codon {codon}")
+        return codons
 
-    def __comp_obs_nd_sd(
+    def __comp_obs_sd_nd_single_codon(
+        self, ref_codon: str, obs_codon: str
+    ) -> Tuple[float, float]:
+        """Private method to compute the observed number of synonymous and non-synonymous mutations for a single codon pair.
+
+        Args:
+            ref_codon (str): reference codon
+            obs_codon (str): observed codon
+        Returns:
+            Tuple[float, float]: Number of observed synonymous and non-synonymous mutations.
+        """
+
+        _s = 0
+        _n = 0
+        if ref_codon == obs_codon:
+            return _s, _n
+
+        dist = hamming_distance(ref_codon, obs_codon)
+        if dist == 1:
+            if self.__is_synonymous(ref_codon, obs_codon):
+                _s = 1
+            else:
+                _n = 1
+        else:
+            paths = self.possible_paths[(ref_codon, obs_codon)]
+            situations = len(paths)
+            for path in paths:
+                for p in range(len(path) - 1):
+                    if self.__is_synonymous(path[p], path[p + 1]):
+                        _s += 1
+                    else:
+                        _n += 1
+            _s = _s / situations
+            _n = _n / situations
+        return _s, _n
+
+    def __comp_obs_sd_nd(
         self, ref_codons: List[str], obs_codons: List[str]
     ) -> Tuple[float, float]:
         """Private method to compute the observed number of synonymous and non-synonymous mutations.
@@ -76,33 +122,14 @@ class dnds:
         """
         syn = 0
         non_syn = 0
-        for codon1, codon2 in zip(ref_codons, obs_codons):
-            if codon1 != codon2:
-                _s = 0
-                _n = 0
-                dist = hamming_distance(codon1, codon2)
-                if dist == 1:
-                    if self.__is_synonymous(codon1, codon2):
-                        _s = 1
-                    else:
-                        _n = 1
-                else:
-                    paths = self.possible_paths[(codon1, codon2)]
-                    situations = len(paths)
-                    for path in paths:
-                        for p in range(len(path) - 1):
-                            if self.__is_synonymous(path[p], path[p + 1]):
-                                _s += 1
-                            else:
-                                _n += 1
-                    _s = _s / situations
-                    _n = _n / situations
-                syn += _s
-                non_syn += _n
+        for ref_codon, obs_codon in zip(ref_codons, obs_codons):
+            _s, _n = self.__comp_obs_sd_nd_single_codon(ref_codon, obs_codon)
+            syn += _s
+            non_syn += _n
         return syn, non_syn
 
     def __comp_exp_s_n(self, ref_codons: List[str]) -> Tuple[float, float]:
-        """Compute the expected number of synonymous and non-synonymous mutations for the refence codons.\
+        """Compute the expected number of synonymous and non-synonymous mutations for the reference codons.\
         
         Args:
             ref_codons (List[str]): codons from the reference sequence
@@ -115,14 +142,9 @@ class dnds:
                 exp_n += self.non_syn_expect[codon]
             except KeyError:
                 raise KeyError(f"Invalid codon: {codon}")
-        exp_s = (len(ref_codons)*self.codon_size - exp_n)
+        exp_s = len(ref_codons) * self.codon_size - exp_n
 
         return exp_s, exp_n
-
-    def __is_in_frame(self, seq):
-        if len(seq) % self.codon_size == 0:
-            return True
-        return False
 
     def compute(self, ref_seq: str, obs_seq: str) -> Tuple[float, float]:
         """Compute dn and ds for two sequences using the Nei-Gojobori(1986) method.
@@ -144,7 +166,7 @@ class dnds:
         ref_codons = self.__get_codons(ref_seq)
         obs_codons = self.__get_codons(obs_seq)
         exp_s, exp_n = self.__comp_exp_s_n(ref_codons)
-        obs_s, obs_n = self.__comp_obs_nd_sd(ref_codons, obs_codons)
+        obs_s, obs_n = self.__comp_obs_sd_nd(ref_codons, obs_codons)
 
         pn = obs_n / exp_n
         ps = obs_s / exp_s
