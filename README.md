@@ -2,7 +2,6 @@
 
 Efficiently computing dN/dS according to the Nei-Gojobori(1986)[^1] method
 
-
 ```python
 from comp_dnds import dnds
 
@@ -14,6 +13,8 @@ dn, ds = d.compute(ref_seq, obs_seq)
 print(ω)
 # 0.12468371343300778
 ```
+
+## Background
 
 The dN/dS ratio, often represented as ω (omega), is a metric used in molecular biology and evolutionary biology to measure the selective pressure acting on a protein-coding gene. It compares the rate of non-synonymous substitutions (dN) to the rate of synonymous substitutions (dS) in coding sequences.
 
@@ -29,6 +30,12 @@ The dN/dS ratio, often represented as ω (omega), is a metric used in molecular 
 
 - **dN/dS > 1**: The rate of non-synonimous changes is higher than the rate of synonymous changes. This suggests that the gene is under positive or adaptive selection. This means that nonsynonymous changes provide some advantage and are being selected for.
 
+## Benchmark
+
+![](plots/biopython_benchmark.png)  
+Figure 1: Average time taken by biopython `cal_dn_ds` and `comp_dnds` to compute the dN and dS value for a sequence of length 999 nucleotides. The lower the better.
+
+`comp_dnds` produces identical results to the [`cal_dn_ds`](https://biopython.org/docs/1.75/api/Bio.codonalign.codonseq.html#Bio.codonalign.codonseq.cal_dn_ds) implementation of biopython, while being on average 32X faster than biopython. Detailed benchmark in [notebooks/benchmark.ipynb](notebooks/benchmark.ipynb)
 
 
 [^1]: [Simple methods for estimating the numbers of synonymous and nonsynonymous nucleotide substitutions](https://doi.org/10.1093/oxfordjournals.molbev.a040410)
