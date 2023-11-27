@@ -9,6 +9,8 @@ readme = "README.md"
 python = ">=3.9,<3.13"
 biopython = "^1.81"
 numpy = "^1.26.1"
+tqdm = "^4.66.1"
+scipy = "^1.11.4"
 
 
 [tool.poetry.group.test.dependencies]

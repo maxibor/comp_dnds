@@ -1,8 +1,11 @@
 from Bio.Data import CodonTable
 from typing import List, Tuple
-from numpy import log
+import numpy as np
 from comp_dnds.paths import get_all_codons_paths, hamming_distance
 from comp_dnds.expected import get_expected
+from tqdm import tqdm
+import random
+from scipy.stats import norm
 
 
 class dnds:
@@ -146,7 +149,9 @@ class dnds:
 
         return exp_s, exp_n
 
-    def compute(self, ref_seq: str, obs_seq: str) -> Tuple[float, float]:
+    def _compute_no_bootstrap(
+        self, ref_codons: List[str], obs_codons: List[str]
+    ) -> Tuple[float, float]:
         """Compute dn and ds for two sequences using the Nei-Gojobori(1986) method.
 
         Args:
@@ -155,6 +160,67 @@ class dnds:
 
         Returns:
             Tuple[float, float]: Respectively dN and dS values.
+        """
+
+        exp_s, exp_n = self.__comp_exp_s_n(ref_codons)
+        obs_s, obs_n = self.__comp_obs_sd_nd(ref_codons, obs_codons)
+
+        pn = obs_n / exp_n
+        ps = obs_s / exp_s
+
+        dn = -(3 / 4) * np.log(1 - (4 / 3) * pn)
+        ds = -(3 / 4) * np.log(1 - (4 / 3) * ps)
+
+        return dn, ds
+
+    def _compute_bootstrap(
+        self, ref_codons: List[str], obs_codons: List[str], replicates: int = 1000
+    ) -> Tuple[float, float]:
+        """Compute dn and ds for two sequences using the Nei-Gojobori(1986) method, and uses bootstrap resampling to compute significance.
+
+        Args:
+            ref_seq (str): Reference sequence. Typically the ancestral sequence.
+            obs_seq (str): Observed sequence. Typically the derived sequence.
+            replicates (int, optional): Number of bootstrap replicates. Defaults to 1000.
+
+        Returns:
+            Tuple[float, float, float]: Respectively dN and dS, and z values.
+        """
+
+        dN, dS = self._compute_no_bootstrap(ref_codons, obs_codons)
+
+        codons_idxs = [
+            random.choices(range(len(ref_codons)), k=len(ref_codons))
+            for i in range(replicates)
+        ]
+        rep_ref_codons = [[ref_codons[i] for i in idx] for idx in codons_idxs]
+        rep_obs_codons = [[obs_codons[i] for i in idx] for idx in codons_idxs]
+
+        dNs = np.array([])
+        dSs = np.array([])
+
+        for r in tqdm(range(replicates)):
+            dn, ds = self._compute_no_bootstrap(rep_ref_codons[r], rep_obs_codons[r])
+            dNs = np.append(dNs, dn)
+            dSs = np.append(dSs, ds)
+
+        z = (dN - dS) / np.sqrt(np.nanvar(dSs) + np.nanvar(dNs))
+
+        return dN, dS, z
+
+    def compute(
+        self, ref_seq: str, obs_seq: str, bootstrap: int = 0
+    ) -> Tuple[float, float]:
+        """Compute dn and ds for two sequences using the Nei-Gojobori(1986) method.
+
+        Args:
+            ref_seq (str): Reference sequence. Typically the ancestral sequence.
+            obs_seq (str): Observed sequence. Typically the derived sequence.
+            bootstrap (int, optional): Number of bootstrap replicates. Defaults to 0.
+
+        Returns:
+            Tuple[float, float, float, float]: Respectively dN and dS, and Z-score, and p-value.
+            Z-score and p-value are computed only if bootstrap >= 100.
         """
         if len(ref_seq) != len(obs_seq):
             raise ValueError(
@@ -165,13 +231,15 @@ class dnds:
 
         ref_codons = self.__get_codons(ref_seq)
         obs_codons = self.__get_codons(obs_seq)
-        exp_s, exp_n = self.__comp_exp_s_n(ref_codons)
-        obs_s, obs_n = self.__comp_obs_sd_nd(ref_codons, obs_codons)
 
-        pn = obs_n / exp_n
-        ps = obs_s / exp_s
+        if bootstrap < 100:
+            dn, ds = self._compute_no_bootstrap(ref_codons, obs_codons)
+            z = None
+            pval = None
+        else:
+            dn, ds, z = self._compute_bootstrap(
+                ref_codons, obs_codons, replicates=bootstrap
+            )
+            pval = norm.sf(abs(z)) * 2
 
-        dn = -(3 / 4) * log(1 - (4 / 3) * pn)
-        ds = -(3 / 4) * log(1 - (4 / 3) * ps)
-
-        return dn, ds
+        return dn, ds, z, pval
