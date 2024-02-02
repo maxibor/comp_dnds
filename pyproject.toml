@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "comp_dnds"
-version = "0.1.0"
+version = "0.2.0"
 description = "Efficiently computing dN/dS according to the NJ86 method"
 authors = ["maxibor <maxime_borry@eva.mpg.de>"]
 readme = "README.md"
