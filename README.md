@@ -1,4 +1,5 @@
 # comp_dnds
+[![CI](https://github.com/maxibor/comp_dnds/actions/workflows/ci.yaml/badge.svg)](https://github.com/maxibor/comp_dnds/actions/workflows/ci.yaml) [![PyPI version](https://badge.fury.io/py/comp_dnds.svg)](https://pypi.org/project/comp_dnds)
 
 Efficiently computing dN/dS according to the Nei-Gojobori(1986)[^1] method
 
