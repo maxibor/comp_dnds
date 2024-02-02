@@ -26,6 +26,12 @@ print(f"ω= {round(dn/ds,2)} - z-score= {round(z,2)} - p-val= {round(p, 5)}")
 # ω= 6.91 - z-score= 3.72 - p-val= 0.0002
 ```
 
+## Installation
+
+```bash
+pip install comp_dnds
+```
+
 ## Background
 
 To compute the dN/dS ratio using the Nei-Gojobori(1986)[^1] method, one needs an observed, and a reference, or ancestral sequence. The observed sequence is typically the one from your sample/experiment, while the reference/ancestral sequence can be inferred with ancestral state reconstruction, for example using [IQ-TREE](http://www.iqtree.org/doc/Command-Reference#ancestral-sequence-reconstruction).

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "comp-dnds"
+name = "comp_dnds"
 version = "0.1.0"
 description = "Efficiently computing dN/dS according to the NJ86 method"
 authors = ["maxibor <maxime_borry@eva.mpg.de>"]
